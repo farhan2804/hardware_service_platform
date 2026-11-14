@@ -70,7 +70,7 @@ public class BookingService {
                                 "Service category not found"
                         ));
 
-        if (!category.getActive()) {
+        if (!Boolean.TRUE.equals(category.getActive())) {
             throw new IllegalArgumentException(
                     "This service category is currently unavailable"
             );
@@ -80,6 +80,14 @@ public class BookingService {
                 || !booking.getPreferredDateTime().isAfter(LocalDateTime.now())) {
             throw new IllegalArgumentException(
                     "Please select a future appointment date and time"
+            );
+        }
+
+        if (booking.getPreferredEndDateTime() == null
+                || !booking.getPreferredEndDateTime()
+                        .isAfter(booking.getPreferredDateTime())) {
+            throw new IllegalArgumentException(
+                    "Appointment end time must be after start time"
             );
         }
 
@@ -94,6 +102,17 @@ public class BookingService {
                 || booking.getServiceAddress().isBlank()) {
             throw new IllegalArgumentException(
                     "Service address is required"
+            );
+        }
+
+        if (booking.getLatitude() == null
+                || booking.getLongitude() == null
+                || booking.getLatitude() < -90
+                || booking.getLatitude() > 90
+                || booking.getLongitude() < -180
+                || booking.getLongitude() > 180) {
+            throw new IllegalArgumentException(
+                    "Valid service location coordinates are required"
             );
         }
 
@@ -130,7 +149,8 @@ public class BookingService {
     }
 
     public List<Booking> getEngineerBookings(Long engineerProfileId) {
-        return bookingRepository.findByAssignedEngineerId(engineerProfileId);
+        return bookingRepository
+                .findByAssignedEngineerId(engineerProfileId);
     }
 
     public List<Booking> getBookingsByStatus(BookingStatus status) {
