@@ -29,6 +29,8 @@ public class EngineerProfile {
     private LocalTime workingHoursStart;
 
     private LocalTime workingHoursEnd;
+    @Column(name = "service_radius_km", nullable = false)
+    private Double serviceRadiusKm = 15.0;
 
     // Getters and Setters
 
@@ -94,5 +96,13 @@ public class EngineerProfile {
 
     public void setWorkingHoursEnd(LocalTime workingHoursEnd) {
         this.workingHoursEnd = workingHoursEnd;
+    }
+
+    public Double getServiceRadiusKm() {
+        return serviceRadiusKm;
+    }
+
+    public void setServiceRadiusKm(Double serviceRadiusKm) {
+        this.serviceRadiusKm = serviceRadiusKm;
     }
 }

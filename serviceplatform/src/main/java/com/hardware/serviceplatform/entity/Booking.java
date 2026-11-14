@@ -40,6 +40,9 @@ public class Booking {
     @Column(nullable = false)
     private LocalDateTime preferredDateTime;
 
+    @Column(name = "preferred_end_date_time")
+    private LocalDateTime preferredEndDateTime;
+
     @Column(nullable = false, length = 500)
     private String serviceAddress;
 
@@ -114,6 +117,14 @@ public class Booking {
 
     public void setPreferredDateTime(LocalDateTime preferredDateTime) {
         this.preferredDateTime = preferredDateTime;
+    }
+
+    public LocalDateTime getPreferredEndDateTime() {
+        return preferredEndDateTime;
+    }
+
+    public void setPreferredEndDateTime(LocalDateTime preferredEndDateTime) {
+        this.preferredEndDateTime = preferredEndDateTime;
     }
 
     public String getServiceAddress() {
