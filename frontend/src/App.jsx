@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/auth/Login";
 import CustomerDashboard from "./pages/customer/CustomerDashboard";
+import BookingForm from "./pages/customer/BookingForm";
 
 function EngineerDashboard() {
   return <h1>Engineer Dashboard</h1>;
@@ -24,6 +25,7 @@ function App() {
       <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="*" element={<Navigate to="/login" replace />} />
+      <Route path="/customer/book-service" element={<BookingForm />} />
     </Routes>
   );
 }
