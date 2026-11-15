@@ -1,3 +1,13 @@
+/* =========================================
+   Global
+========================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 .engineer-dashboard {
   min-height: 100vh;
   display: flex;
@@ -5,7 +15,9 @@
   color: #17212b;
 }
 
-/* Sidebar */
+/* =========================================
+   Sidebar
+========================================= */
 
 .engineer-sidebar {
   width: 250px;
@@ -136,7 +148,9 @@
   color: #fff;
 }
 
-/* Main content */
+/* =========================================
+   Main Content
+========================================= */
 
 .engineer-main {
   flex: 1;
@@ -203,7 +217,9 @@
   }
 }
 
-/* Welcome section */
+/* =========================================
+   Welcome Section
+========================================= */
 
 .engineer-welcome {
   min-height: 155px;
@@ -251,7 +267,9 @@
   font-size: 39px;
 }
 
-/* Statistics */
+/* =========================================
+   Statistics
+========================================= */
 
 .engineer-stats-grid {
   display: grid;
@@ -324,7 +342,9 @@
   font-size: 11px;
 }
 
-/* Jobs section */
+/* =========================================
+   Jobs Section
+========================================= */
 
 .engineer-jobs-section {
   background: #fff;
@@ -411,6 +431,8 @@
   color: #526170;
 }
 
+/* Status badges */
+
 .status-completed {
   background: #e6f8f1;
   color: #16845c;
@@ -472,6 +494,7 @@
   font-size: 17px;
   line-height: 1;
   margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .engineer-job-details > div > div {
@@ -498,7 +521,50 @@
   font-size: 10px;
 }
 
-/* Loading, error and empty states */
+/* =========================================
+   Accept Job Action
+========================================= */
+
+.engineer-job-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 17px;
+  padding-top: 15px;
+  border-top: 1px solid #edf0f3;
+}
+
+.accept-job-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 7px;
+  background: #19bca6;
+  color: #10232d;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.accept-job-button:hover {
+  background: #13a993;
+}
+
+.accept-job-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.engineer-action-error {
+  color: #c64d4d;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+/* =========================================
+   Loading, Error and Empty States
+========================================= */
 
 .engineer-state {
   min-height: 220px;
@@ -563,7 +629,9 @@
   font-size: 12px;
 }
 
-/* Responsive */
+/* =========================================
+   Responsive: Tablets
+========================================= */
 
 @media (max-width: 1100px) {
   .engineer-stats-grid {
@@ -590,6 +658,10 @@
   }
 }
 
+/* =========================================
+   Responsive: Mobile
+========================================= */
+
 @media (max-width: 650px) {
   .engineer-dashboard {
     flex-direction: column;
@@ -606,9 +678,27 @@
   }
 
   .engineer-sidebar-label,
-  .engineer-nav,
-  .engineer-sidebar-bottom {
+  .engineer-nav {
     display: none;
+  }
+
+  /* Keep profile and logout accessible on mobile */
+  .engineer-sidebar-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .engineer-profile {
+    border-top: none;
+    padding: 5px 0;
+  }
+
+  .engineer-logout {
+    width: auto;
+    padding: 9px 12px;
   }
 
   .engineer-main {
@@ -678,8 +768,29 @@
   }
 }
 
+/* =========================================
+   Responsive: Small Phones
+========================================= */
+
 @media (max-width: 380px) {
   .engineer-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .engineer-header {
+    flex-wrap: wrap;
+  }
+
+  .engineer-welcome {
+    padding: 18px;
+  }
+
+  .engineer-welcome-icon {
+    display: none;
+  }
+
+  .engineer-section-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

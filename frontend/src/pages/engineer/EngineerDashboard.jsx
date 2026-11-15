@@ -66,6 +66,11 @@ function EngineerDashboard() {
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
+  // Accept Job state
+  const [acceptingJobId, setAcceptingJobId] = useState(null);
+  const [actionError, setActionError] = useState("");
+
+  // Fetch assigned jobs
   const fetchJobs = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -96,11 +101,33 @@ function EngineerDashboard() {
     fetchJobs();
   }, [fetchJobs]);
 
+  // Accept an assigned job
+  const handleAcceptJob = async (bookingId) => {
+    try {
+      setAcceptingJobId(bookingId);
+      setActionError("");
+
+      await api.post(`/engineers/me/jobs/${bookingId}/accept`);
+
+      await fetchJobs(true);
+    } catch (err) {
+      console.error("Failed to accept job:", err);
+      setActionError(
+        err.response?.data?.message ||
+          "Unable to accept this job. Please try again.",
+      );
+    } finally {
+      setAcceptingJobId(null);
+    }
+  };
+
+  // Logout
   const handleLogout = () => {
     logout();
     navigate("/login");
   };
 
+  // Dashboard statistics
   const activeJobs = jobs.filter((job) => ACTIVE_STATUSES.includes(job.status));
 
   const completedJobs = jobs.filter((job) => job.status === "COMPLETED");
@@ -171,7 +198,9 @@ function EngineerDashboard() {
         <section className="engineer-welcome">
           <div>
             <span className="engineer-welcome-tag">ENGINEER WORKSPACE</span>
+
             <h2>Welcome back, {displayName.split("@")[0]}!</h2>
+
             <p>
               Here is an overview of your service assignments and job progress.
             </p>
@@ -180,12 +209,14 @@ function EngineerDashboard() {
           <div className="engineer-welcome-icon">⚙</div>
         </section>
 
+        {/* Statistics */}
         <section className="engineer-stats-grid">
           <div className="engineer-stat-card">
             <div className="engineer-stat-top">
               <span>Total Jobs</span>
               <span className="engineer-stat-icon blue">▦</span>
             </div>
+
             <strong>{jobs.length}</strong>
             <small>All assigned bookings</small>
           </div>
@@ -195,6 +226,7 @@ function EngineerDashboard() {
               <span>Active Jobs</span>
               <span className="engineer-stat-icon orange">◷</span>
             </div>
+
             <strong>{activeJobs.length}</strong>
             <small>Jobs currently in progress</small>
           </div>
@@ -204,6 +236,7 @@ function EngineerDashboard() {
               <span>Completed</span>
               <span className="engineer-stat-icon green">✓</span>
             </div>
+
             <strong>{completedJobs.length}</strong>
             <small>Successfully completed jobs</small>
           </div>
@@ -213,11 +246,13 @@ function EngineerDashboard() {
               <span>Cancelled</span>
               <span className="engineer-stat-icon red">×</span>
             </div>
+
             <strong>{cancelledJobs.length}</strong>
             <small>Cancelled bookings</small>
           </div>
         </section>
 
+        {/* Assigned Jobs */}
         <section className="engineer-jobs-section">
           <div className="engineer-section-header">
             <div>
@@ -239,12 +274,15 @@ function EngineerDashboard() {
             <div className="engineer-state engineer-error">
               <span>!</span>
               <p>{error}</p>
+
               <button onClick={() => fetchJobs()}>Try Again</button>
             </div>
           ) : jobs.length === 0 ? (
             <div className="engineer-state">
               <div className="engineer-empty-icon">▦</div>
+
               <h3>No jobs assigned yet</h3>
+
               <p>
                 New service assignments will appear here when they are allocated
                 to you.
@@ -259,6 +297,7 @@ function EngineerDashboard() {
                       <span className="engineer-booking-id">
                         BOOKING #{job.bookingId}
                       </span>
+
                       <h3>{job.serviceCategory}</h3>
                     </div>
 
@@ -276,6 +315,7 @@ function EngineerDashboard() {
                   <div className="engineer-job-details">
                     <div>
                       <span className="job-detail-icon">▤</span>
+
                       <div>
                         <small>Service Type</small>
                         <strong>{job.serviceType?.replaceAll("_", " ")}</strong>
@@ -284,11 +324,15 @@ function EngineerDashboard() {
 
                     <div>
                       <span className="job-detail-icon">▦</span>
+
                       <div>
                         <small>Appointment</small>
+
                         <strong>{formatDate(job.preferredDateTime)}</strong>
+
                         <span className="job-detail-subtext">
                           {formatTime(job.preferredDateTime)}
+
                           {job.preferredEndDateTime
                             ? ` - ${formatTime(job.preferredEndDateTime)}`
                             : ""}
@@ -298,12 +342,32 @@ function EngineerDashboard() {
 
                     <div className="engineer-address-detail">
                       <span className="job-detail-icon">⌖</span>
+
                       <div>
                         <small>Service Address</small>
                         <strong>{job.serviceAddress}</strong>
                       </div>
                     </div>
                   </div>
+
+                  {/* Accept Job button */}
+                  {job.status === "ENGINEER_ASSIGNED" && (
+                    <div className="engineer-job-actions">
+                      <button
+                        className="accept-job-button"
+                        onClick={() => handleAcceptJob(job.bookingId)}
+                        disabled={acceptingJobId === job.bookingId}
+                      >
+                        {acceptingJobId === job.bookingId
+                          ? "Accepting..."
+                          : "Accept Job"}
+                      </button>
+                    </div>
+                  )}
+
+                  {actionError && (
+                    <p className="engineer-action-error">{actionError}</p>
+                  )}
                 </article>
               ))}
             </div>
