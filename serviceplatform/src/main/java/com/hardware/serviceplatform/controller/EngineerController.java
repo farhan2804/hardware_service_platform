@@ -80,6 +80,21 @@ public class EngineerController {
                                 skill.getServiceType().name());
         }
 
+        // ADMIN: View skills assigned to an engineer
+        @GetMapping("/{engineerId}/skills")
+        @PreAuthorize("hasRole('ADMIN')")
+        public List<SkillResponse> getEngineerSkills(
+                        @PathVariable Long engineerId) {
+
+                return engineerService.getEngineerSkills(engineerId)
+                                .stream()
+                                .map(skill -> new SkillResponse(
+                                                skill.getId(),
+                                                skill.getServiceCategory().getName(),
+                                                skill.getServiceType().name()))
+                                .toList();
+        }
+
         // ENGINEER: View own profile
         @GetMapping("/me")
         @PreAuthorize("hasRole('ENGINEER')")

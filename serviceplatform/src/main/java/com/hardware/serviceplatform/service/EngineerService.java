@@ -135,6 +135,17 @@ public class EngineerService {
         public EngineerProfile updateAvailability(String email, boolean available) {
                 EngineerProfile profile = findByEmail(email);
                 profile.setAvailable(available);
+
                 return engineerProfileRepository.save(profile);
+        }
+
+        // ADMIN: Retrieve all skills assigned to an engineer
+        public List<EngineerSkill> getEngineerSkills(Long engineerId) {
+
+                engineerProfileRepository.findById(engineerId)
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Engineer profile not found"));
+
+                return engineerSkillRepository.findByEngineerProfileId(engineerId);
         }
 }
