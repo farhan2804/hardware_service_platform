@@ -1,0 +1,685 @@
+.engineer-dashboard {
+  min-height: 100vh;
+  display: flex;
+  background: #f5f7fa;
+  color: #17212b;
+}
+
+/* Sidebar */
+
+.engineer-sidebar {
+  width: 250px;
+  min-width: 250px;
+  background: #111d2a;
+  color: #fff;
+  padding: 25px 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.engineer-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 48px;
+}
+
+.engineer-brand-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #19d9bd;
+  color: #10232d;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.engineer-sidebar-label {
+  color: #8493a2;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  margin: 0 10px 14px;
+}
+
+.engineer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.engineer-nav-item {
+  padding: 13px 14px;
+  border-radius: 8px;
+  color: #b8c4ce;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+}
+
+.engineer-nav-item.active {
+  background: rgba(25, 217, 189, 0.13);
+  color: #19d9bd;
+  font-weight: 600;
+}
+
+.nav-icon {
+  font-size: 19px;
+}
+
+.engineer-sidebar-bottom {
+  margin-top: auto;
+}
+
+.engineer-profile {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 17px 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.engineer-avatar {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #19d9bd;
+  color: #10232d;
+  display: grid;
+  place-items: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.engineer-profile-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.engineer-profile-info strong {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.engineer-profile-info span {
+  font-size: 11px;
+  color: #9ba9b6;
+}
+
+.engineer-logout {
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #c4cdd5;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+
+.engineer-logout:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+/* Main content */
+
+.engineer-main {
+  flex: 1;
+  min-width: 0;
+  padding: 30px 36px;
+}
+
+.engineer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 26px;
+}
+
+.engineer-header h1 {
+  font-size: 25px;
+  margin: 0 0 7px;
+  color: #17212b;
+}
+
+.engineer-header p {
+  margin: 0;
+  font-size: 13px;
+  color: #7b8793;
+}
+
+.engineer-refresh-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #fff;
+  border: 1px solid #dfe5eb;
+  border-radius: 8px;
+  color: #263746;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.engineer-refresh-button:hover {
+  border-color: #19d9bd;
+  color: #087e70;
+}
+
+.engineer-refresh-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.engineer-refresh-button > span {
+  font-size: 18px;
+}
+
+.refresh-spinning {
+  display: inline-block;
+  animation: engineer-spin 0.8s linear infinite;
+}
+
+@keyframes engineer-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Welcome section */
+
+.engineer-welcome {
+  min-height: 155px;
+  padding: 27px 32px;
+  border-radius: 13px;
+  background: #142838;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+.engineer-welcome-tag {
+  display: inline-block;
+  color: #19d9bd;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.3px;
+  margin-bottom: 12px;
+}
+
+.engineer-welcome h2 {
+  margin: 0 0 9px;
+  font-size: 23px;
+}
+
+.engineer-welcome p {
+  margin: 0;
+  color: #bdcbd5;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.engineer-welcome-icon {
+  width: 75px;
+  height: 75px;
+  flex-shrink: 0;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  background: rgba(25, 217, 189, 0.12);
+  color: #19d9bd;
+  font-size: 39px;
+}
+
+/* Statistics */
+
+.engineer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 30px;
+}
+
+.engineer-stat-card {
+  background: #fff;
+  padding: 19px;
+  border: 1px solid #e9edf1;
+  border-radius: 11px;
+  min-width: 0;
+}
+
+.engineer-stat-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.engineer-stat-top > span:first-child {
+  color: #6d7985;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.engineer-stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.engineer-stat-icon.blue {
+  background: #eaf2ff;
+  color: #3979d6;
+}
+
+.engineer-stat-icon.orange {
+  background: #fff3e6;
+  color: #df8a2d;
+}
+
+.engineer-stat-icon.green {
+  background: #e6f8f1;
+  color: #1b9a6b;
+}
+
+.engineer-stat-icon.red {
+  background: #fff0f0;
+  color: #dc5b5b;
+}
+
+.engineer-stat-card > strong {
+  display: block;
+  font-size: 27px;
+  color: #17212b;
+  margin-bottom: 5px;
+}
+
+.engineer-stat-card > small {
+  color: #929ca6;
+  font-size: 11px;
+}
+
+/* Jobs section */
+
+.engineer-jobs-section {
+  background: #fff;
+  border: 1px solid #e9edf1;
+  border-radius: 12px;
+  padding: 23px;
+}
+
+.engineer-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 21px;
+}
+
+.engineer-section-header h2 {
+  font-size: 17px;
+  margin: 0 0 6px;
+}
+
+.engineer-section-header p {
+  font-size: 12px;
+  color: #89939d;
+  margin: 0;
+}
+
+.engineer-job-count {
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #e8faf7;
+  color: #087e70;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.engineer-jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.engineer-job-card {
+  padding: 19px;
+  border: 1px solid #e8edf1;
+  border-radius: 10px;
+  transition: border-color 0.2s ease;
+}
+
+.engineer-job-card:hover {
+  border-color: #a5e8df;
+}
+
+.engineer-job-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.engineer-booking-id {
+  display: block;
+  color: #89949e;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  margin-bottom: 7px;
+}
+
+.engineer-job-top h3 {
+  font-size: 16px;
+  margin: 0;
+  color: #17212b;
+}
+
+.engineer-status {
+  padding: 6px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: #edf1f5;
+  color: #526170;
+}
+
+.status-completed {
+  background: #e6f8f1;
+  color: #16845c;
+}
+
+.status-cancelled {
+  background: #fff0f0;
+  color: #c64d4d;
+}
+
+.status-awaiting_assignment,
+.status-request_received {
+  background: #fff5e5;
+  color: #ad741d;
+}
+
+.status-engineer_assigned,
+.status-accepted {
+  background: #eaf2ff;
+  color: #3973c3;
+}
+
+.status-on_the_way,
+.status-arrived {
+  background: #e8f7fc;
+  color: #21829e;
+}
+
+.status-quotation_shared,
+.status-work_in_progress {
+  background: #f0ebff;
+  color: #7955bd;
+}
+
+.engineer-job-description {
+  margin: 13px 0 18px;
+  color: #697682;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.engineer-job-details {
+  display: grid;
+  grid-template-columns: 0.8fr 1fr 1.5fr;
+  gap: 17px;
+  padding-top: 16px;
+  border-top: 1px solid #edf0f3;
+}
+
+.engineer-job-details > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+}
+
+.job-detail-icon {
+  color: #159f8c;
+  font-size: 17px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.engineer-job-details > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.engineer-job-details small {
+  color: #929ca6;
+  font-size: 10px;
+}
+
+.engineer-job-details strong {
+  color: #35424e;
+  font-size: 11px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.job-detail-subtext {
+  color: #7c8994;
+  font-size: 10px;
+}
+
+/* Loading, error and empty states */
+
+.engineer-state {
+  min-height: 220px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 25px;
+}
+
+.engineer-state p {
+  color: #84909b;
+  font-size: 13px;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+.engineer-loader {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #dce9e7;
+  border-top-color: #19bca6;
+  border-radius: 50%;
+  animation: engineer-spin 0.8s linear infinite;
+}
+
+.engineer-empty-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: #e8faf7;
+  color: #159f8c;
+  font-size: 25px;
+}
+
+.engineer-state h3 {
+  font-size: 15px;
+  margin: 15px 0 0;
+}
+
+.engineer-error > span {
+  width: 35px;
+  height: 35px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff0f0;
+  color: #c64d4d;
+  font-weight: 700;
+}
+
+.engineer-error button {
+  border: 0;
+  border-radius: 7px;
+  padding: 9px 16px;
+  background: #142838;
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* Responsive */
+
+@media (max-width: 1100px) {
+  .engineer-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .engineer-job-details {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .engineer-address-detail {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .engineer-sidebar {
+    width: 215px;
+    min-width: 215px;
+  }
+
+  .engineer-main {
+    padding: 25px 22px;
+  }
+}
+
+@media (max-width: 650px) {
+  .engineer-dashboard {
+    flex-direction: column;
+  }
+
+  .engineer-sidebar {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 17px;
+  }
+
+  .engineer-brand {
+    margin-bottom: 12px;
+  }
+
+  .engineer-sidebar-label,
+  .engineer-nav,
+  .engineer-sidebar-bottom {
+    display: none;
+  }
+
+  .engineer-main {
+    padding: 22px 15px;
+  }
+
+  .engineer-header {
+    align-items: flex-start;
+  }
+
+  .engineer-header h1 {
+    font-size: 20px;
+  }
+
+  .engineer-refresh-button {
+    padding: 9px 11px;
+    font-size: 11px;
+  }
+
+  .engineer-welcome {
+    padding: 22px;
+    min-height: 130px;
+  }
+
+  .engineer-welcome h2 {
+    font-size: 19px;
+  }
+
+  .engineer-welcome-icon {
+    width: 52px;
+    height: 52px;
+    font-size: 27px;
+  }
+
+  .engineer-stats-grid {
+    gap: 10px;
+  }
+
+  .engineer-stat-card {
+    padding: 14px;
+  }
+
+  .engineer-stat-card > strong {
+    font-size: 23px;
+  }
+
+  .engineer-jobs-section {
+    padding: 16px;
+  }
+
+  .engineer-job-card {
+    padding: 15px;
+  }
+
+  .engineer-job-top {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .engineer-job-details {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .engineer-address-detail {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .engineer-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
