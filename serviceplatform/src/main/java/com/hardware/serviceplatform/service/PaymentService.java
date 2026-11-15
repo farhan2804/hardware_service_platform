@@ -30,11 +30,20 @@ public class PaymentService {
     }
 
     @Transactional
-    public Payment createPayment(Long quotationId, String paymentMethod) {
+    public Payment createPayment(
+            Long quotationId,
+            Long customerId,
+            String paymentMethod) {
 
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Quotation not found"));
+
+        if (!quotation.getBooking().getCustomer().getId()
+                .equals(customerId)) {
+            throw new IllegalArgumentException(
+                    "You are not authorized to pay for this quotation");
+        }
 
         if (quotation.getStatus() != QuotationStatus.APPROVED) {
             throw new IllegalArgumentException(
@@ -52,23 +61,36 @@ public class PaymentService {
         }
 
         Payment payment = new Payment();
+
         payment.setQuotation(quotation);
         payment.setAmount(quotation.getTotalAmount());
         payment.setPaymentMethod(paymentMethod);
         payment.setTransactionReference(
-                "TXN-" + UUID.randomUUID()
-        );
+                "TXN-" + UUID.randomUUID());
         payment.setStatus(PaymentStatus.PENDING);
 
         return paymentRepository.save(payment);
     }
 
     @Transactional
-    public Payment simulatePayment(Long paymentId, boolean successful) {
+    public Payment simulatePayment(
+            Long paymentId,
+            Long customerId,
+            boolean successful) {
 
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Payment not found"));
+
+        Long bookingCustomerId = payment.getQuotation()
+                .getBooking()
+                .getCustomer()
+                .getId();
+
+        if (!bookingCustomerId.equals(customerId)) {
+            throw new IllegalArgumentException(
+                    "You are not authorized to process this payment");
+        }
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
             throw new IllegalArgumentException(
@@ -86,7 +108,20 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-    public Optional<Payment> getPaymentByQuotationId(Long quotationId) {
+    public Optional<Payment> getPaymentByQuotationId(
+            Long quotationId,
+            Long customerId) {
+
+        Quotation quotation = quotationRepository.findById(quotationId)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Quotation not found"));
+
+        if (!quotation.getBooking().getCustomer().getId()
+                .equals(customerId)) {
+            throw new IllegalArgumentException(
+                    "You are not authorized to view this payment");
+        }
+
         return paymentRepository.findByQuotationId(quotationId);
     }
 }

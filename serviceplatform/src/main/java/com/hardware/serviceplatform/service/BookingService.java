@@ -22,138 +22,216 @@ import java.util.Optional;
 @Service
 public class BookingService {
 
-    private final BookingRepository bookingRepository;
-    private final UserRepository userRepository;
-    private final ServiceCategoryRepository serviceCategoryRepository;
-    private final BookingStatusHistoryRepository statusHistoryRepository;
+        private final BookingRepository bookingRepository;
+        private final UserRepository userRepository;
+        private final ServiceCategoryRepository serviceCategoryRepository;
+        private final BookingStatusHistoryRepository statusHistoryRepository;
 
-    public BookingService(
-            BookingRepository bookingRepository,
-            UserRepository userRepository,
-            ServiceCategoryRepository serviceCategoryRepository,
-            BookingStatusHistoryRepository statusHistoryRepository) {
+        public BookingService(
+                        BookingRepository bookingRepository,
+                        UserRepository userRepository,
+                        ServiceCategoryRepository serviceCategoryRepository,
+                        BookingStatusHistoryRepository statusHistoryRepository) {
 
-        this.bookingRepository = bookingRepository;
-        this.userRepository = userRepository;
-        this.serviceCategoryRepository = serviceCategoryRepository;
-        this.statusHistoryRepository = statusHistoryRepository;
-    }
-
-    @Transactional
-    public Booking createBooking(Booking booking) {
-
-        if (booking.getCustomer() == null
-                || booking.getCustomer().getId() == null) {
-            throw new IllegalArgumentException("Customer is required");
+                this.bookingRepository = bookingRepository;
+                this.userRepository = userRepository;
+                this.serviceCategoryRepository = serviceCategoryRepository;
+                this.statusHistoryRepository = statusHistoryRepository;
         }
 
-        if (booking.getServiceCategory() == null
-                || booking.getServiceCategory().getId() == null) {
-            throw new IllegalArgumentException("Service category is required");
+        @Transactional
+        public Booking createBooking(Booking booking) {
+
+                if (booking.getCustomer() == null
+                                || booking.getCustomer().getId() == null) {
+                        throw new IllegalArgumentException("Customer is required");
+                }
+
+                if (booking.getServiceCategory() == null
+                                || booking.getServiceCategory().getId() == null) {
+                        throw new IllegalArgumentException("Service category is required");
+                }
+
+                User customer = userRepository
+                                .findById(booking.getCustomer().getId())
+                                .orElseThrow(() -> new IllegalArgumentException("Customer not found"));
+
+                if (customer.getRole() != Role.CUSTOMER) {
+                        throw new IllegalArgumentException(
+                                        "Only customers can create bookings");
+                }
+
+                ServiceCategory category = serviceCategoryRepository
+                                .findById(booking.getServiceCategory().getId())
+                                .orElseThrow(() -> new IllegalArgumentException(
+                                                "Service category not found"));
+
+                if (!Boolean.TRUE.equals(category.getActive())) {
+                        throw new IllegalArgumentException(
+                                        "This service category is currently unavailable");
+                }
+
+                if (booking.getPreferredDateTime() == null
+                                || !booking.getPreferredDateTime().isAfter(LocalDateTime.now())) {
+                        throw new IllegalArgumentException(
+                                        "Please select a future appointment date and time");
+                }
+
+                if (booking.getPreferredEndDateTime() == null
+                                || !booking.getPreferredEndDateTime()
+                                                .isAfter(booking.getPreferredDateTime())) {
+                        throw new IllegalArgumentException(
+                                        "Appointment end time must be after start time");
+                }
+
+                if (booking.getIssueDescription() == null
+                                || booking.getIssueDescription().isBlank()) {
+                        throw new IllegalArgumentException(
+                                        "Issue description is required");
+                }
+
+                if (booking.getServiceAddress() == null
+                                || booking.getServiceAddress().isBlank()) {
+                        throw new IllegalArgumentException(
+                                        "Service address is required");
+                }
+
+                if (booking.getLatitude() == null
+                                || booking.getLongitude() == null
+                                || booking.getLatitude() < -90
+                                || booking.getLatitude() > 90
+                                || booking.getLongitude() < -180
+                                || booking.getLongitude() > 180) {
+                        throw new IllegalArgumentException(
+                                        "Valid service location coordinates are required");
+                }
+
+                booking.setCustomer(customer);
+                booking.setServiceCategory(category);
+
+                // Engineer allocation happens separately.
+                booking.setAssignedEngineer(null);
+
+                booking.setStatus(BookingStatus.REQUEST_RECEIVED);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                // Record the initial booking status.
+                BookingStatusHistory history = new BookingStatusHistory();
+                history.setBooking(savedBooking);
+                history.setPreviousStatus(null);
+                history.setNewStatus(BookingStatus.REQUEST_RECEIVED);
+                history.setChangedBy(null);
+                history.setNote("Booking request created");
+
+                statusHistoryRepository.save(history);
+
+                return savedBooking;
         }
 
-        User customer = userRepository
-                .findById(booking.getCustomer().getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Customer not found"));
-
-        if (customer.getRole() != Role.CUSTOMER) {
-            throw new IllegalArgumentException(
-                    "Only customers can create bookings"
-            );
+        public Optional<Booking> findById(Long bookingId) {
+                return bookingRepository.findById(bookingId);
         }
 
-        ServiceCategory category = serviceCategoryRepository
-                .findById(booking.getServiceCategory().getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException(
-                                "Service category not found"
-                        ));
-
-        if (!Boolean.TRUE.equals(category.getActive())) {
-            throw new IllegalArgumentException(
-                    "This service category is currently unavailable"
-            );
+        public List<Booking> getCustomerBookings(Long customerId) {
+                return bookingRepository
+                                .findByCustomerIdOrderByCreatedAtDesc(customerId);
         }
 
-        if (booking.getPreferredDateTime() == null
-                || !booking.getPreferredDateTime().isAfter(LocalDateTime.now())) {
-            throw new IllegalArgumentException(
-                    "Please select a future appointment date and time"
-            );
+        public List<Booking> getEngineerBookings(Long engineerProfileId) {
+                return bookingRepository
+                                .findByAssignedEngineerId(engineerProfileId);
         }
 
-        if (booking.getPreferredEndDateTime() == null
-                || !booking.getPreferredEndDateTime()
-                        .isAfter(booking.getPreferredDateTime())) {
-            throw new IllegalArgumentException(
-                    "Appointment end time must be after start time"
-            );
+        public List<Booking> getAllBookings() {
+                return bookingRepository.findAll();
         }
 
-        if (booking.getIssueDescription() == null
-                || booking.getIssueDescription().isBlank()) {
-            throw new IllegalArgumentException(
-                    "Issue description is required"
-            );
+        @Transactional
+        public Booking acceptBooking(Long bookingId, Long engineerProfileId, User changedBy) {
+
+                Booking booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+                if (booking.getAssignedEngineer() == null
+                                || !booking.getAssignedEngineer().getId().equals(engineerProfileId)) {
+                        throw new IllegalArgumentException(
+                                        "You are not assigned to this booking");
+                }
+
+                if (booking.getStatus() != BookingStatus.ENGINEER_ASSIGNED) {
+                        throw new IllegalArgumentException(
+                                        "Only assigned bookings can be accepted");
+                }
+
+                BookingStatus previousStatus = booking.getStatus();
+
+                booking.setStatus(BookingStatus.ACCEPTED);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                BookingStatusHistory history = new BookingStatusHistory();
+                history.setBooking(savedBooking);
+                history.setPreviousStatus(previousStatus);
+                history.setNewStatus(BookingStatus.ACCEPTED);
+                history.setChangedBy(changedBy);
+                history.setNote("Engineer accepted the booking");
+
+                statusHistoryRepository.save(history);
+
+                return savedBooking;
         }
 
-        if (booking.getServiceAddress() == null
-                || booking.getServiceAddress().isBlank()) {
-            throw new IllegalArgumentException(
-                    "Service address is required"
-            );
+        @Transactional
+        public Booking updateEngineerBookingStatus(
+                        Long bookingId,
+                        Long engineerProfileId,
+                        User changedBy,
+                        BookingStatus newStatus) {
+
+                Booking booking = bookingRepository.findById(bookingId)
+                                .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
+
+                if (booking.getAssignedEngineer() == null
+                                || !booking.getAssignedEngineer().getId()
+                                                .equals(engineerProfileId)) {
+                        throw new IllegalArgumentException(
+                                        "You are not assigned to this booking");
+                }
+
+                BookingStatus currentStatus = booking.getStatus();
+
+                boolean validTransition = (currentStatus == BookingStatus.ACCEPTED
+                                && newStatus == BookingStatus.ON_THE_WAY)
+                                ||
+                                (currentStatus == BookingStatus.ON_THE_WAY
+                                                && newStatus == BookingStatus.ARRIVED)
+                                ||
+                                (currentStatus == BookingStatus.WORK_IN_PROGRESS
+                                                && newStatus == BookingStatus.COMPLETED);
+
+                if (!validTransition) {
+                        throw new IllegalArgumentException(
+                                        "Invalid booking status transition");
+                }
+
+                booking.setStatus(newStatus);
+
+                Booking savedBooking = bookingRepository.save(booking);
+
+                BookingStatusHistory history = new BookingStatusHistory();
+                history.setBooking(savedBooking);
+                history.setPreviousStatus(currentStatus);
+                history.setNewStatus(newStatus);
+                history.setChangedBy(changedBy);
+                history.setNote("Engineer updated booking status to " + newStatus);
+
+                statusHistoryRepository.save(history);
+
+                return savedBooking;
         }
 
-        if (booking.getLatitude() == null
-                || booking.getLongitude() == null
-                || booking.getLatitude() < -90
-                || booking.getLatitude() > 90
-                || booking.getLongitude() < -180
-                || booking.getLongitude() > 180) {
-            throw new IllegalArgumentException(
-                    "Valid service location coordinates are required"
-            );
+        public List<Booking> getBookingsByStatus(BookingStatus status) {
+                return bookingRepository.findByStatus(status);
         }
-
-        booking.setCustomer(customer);
-        booking.setServiceCategory(category);
-
-        // Engineer allocation happens separately.
-        booking.setAssignedEngineer(null);
-
-        booking.setStatus(BookingStatus.REQUEST_RECEIVED);
-
-        Booking savedBooking = bookingRepository.save(booking);
-
-        // Record the initial booking status.
-        BookingStatusHistory history = new BookingStatusHistory();
-        history.setBooking(savedBooking);
-        history.setPreviousStatus(null);
-        history.setNewStatus(BookingStatus.REQUEST_RECEIVED);
-        history.setChangedBy(null);
-        history.setNote("Booking request created");
-
-        statusHistoryRepository.save(history);
-
-        return savedBooking;
-    }
-
-    public Optional<Booking> findById(Long bookingId) {
-        return bookingRepository.findById(bookingId);
-    }
-
-    public List<Booking> getCustomerBookings(Long customerId) {
-        return bookingRepository
-                .findByCustomerIdOrderByCreatedAtDesc(customerId);
-    }
-
-    public List<Booking> getEngineerBookings(Long engineerProfileId) {
-        return bookingRepository
-                .findByAssignedEngineerId(engineerProfileId);
-    }
-
-    public List<Booking> getBookingsByStatus(BookingStatus status) {
-        return bookingRepository.findByStatus(status);
-    }
 }
