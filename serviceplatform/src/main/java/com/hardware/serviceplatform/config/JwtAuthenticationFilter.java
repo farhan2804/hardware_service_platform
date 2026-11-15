@@ -1,3 +1,4 @@
+
 package com.hardware.serviceplatform.config;
 
 import com.hardware.serviceplatform.service.CustomUserDetailsService;
@@ -50,6 +51,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             email = jwtService.extractEmail(token);
         } catch (RuntimeException exception) {
+            System.out.println("JWT ERROR: Unable to extract email: "
+                    + exception.getMessage());
+
             filterChain.doFilter(request, response);
             return;
         }
@@ -57,25 +61,39 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (email != null &&
                 SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            UserDetails userDetails =
-                    userDetailsService.loadUserByUsername(email);
+            try {
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(email);
 
-            if (jwtService.isTokenValid(token, userDetails.getUsername())) {
+                if (jwtService.isTokenValid(token, userDetails.getUsername())) {
 
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(
-                                userDetails,
-                                null,
-                                userDetails.getAuthorities()
-                        );
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    userDetails,
+                                    null,
+                                    userDetails.getAuthorities()
+                            );
 
-                authentication.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request)
-                );
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource()
+                                    .buildDetails(request)
+                    );
 
-                SecurityContextHolder.getContext()
-                        .setAuthentication(authentication);
+                    SecurityContextHolder.getContext()
+                            .setAuthentication(authentication);
+
+                    // Temporary debugging logs
+                    System.out.println("JWT USER: " + authentication.getName());
+                    System.out.println("JWT AUTHORITIES: "
+                            + authentication.getAuthorities());
+
+                } else {
+                    System.out.println("JWT ERROR: Token validation failed.");
+                }
+
+            } catch (RuntimeException exception) {
+                System.out.println("JWT ERROR: User authentication failed: "
+                        + exception.getMessage());
             }
         }
 
