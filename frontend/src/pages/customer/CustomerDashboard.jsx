@@ -245,7 +245,21 @@ function CustomerDashboard() {
           {!loading && !error && bookings.length > 0 && (
             <div className="booking-list">
               {bookings.map((booking) => (
-                <article className="booking-card" key={booking.bookingId}>
+                <article
+                  className="booking-card"
+                  key={booking.bookingId}
+                  onClick={() =>
+                    navigate(`/customer/bookings/${booking.bookingId}`)
+                  }
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      navigate(`/customer/bookings/${booking.bookingId}`);
+                    }
+                  }}
+                >
                   <div className="booking-card-top">
                     <div className="booking-service">
                       <div className="booking-service-icon">⚙</div>

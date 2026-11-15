@@ -16,148 +16,172 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
-
+import com.hardware.serviceplatform.dto.response.BookingStatusHistoryResponse;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/bookings")
 public class BookingController {
 
-    private final BookingService bookingService;
-    private final UserRepository userRepository;
-    private final EngineerAllocationService engineerAllocationService;
+        private final BookingService bookingService;
+        private final UserRepository userRepository;
+        private final EngineerAllocationService engineerAllocationService;
 
-    public BookingController(
-            BookingService bookingService,
-            UserRepository userRepository,
-            EngineerAllocationService engineerAllocationService) {
+        public BookingController(
+                        BookingService bookingService,
+                        UserRepository userRepository,
+                        EngineerAllocationService engineerAllocationService) {
 
-        this.bookingService = bookingService;
-        this.userRepository = userRepository;
-        this.engineerAllocationService = engineerAllocationService;
-    }
-
-    // Create a booking for the authenticated customer
-    @PostMapping
-    public ResponseEntity<BookingResponse> createBooking(
-            @Valid @RequestBody BookingRequest request,
-            Authentication authentication) {
-
-        User customer = getAuthenticatedCustomer(authentication);
-
-        ServiceCategory category = new ServiceCategory();
-        category.setId(request.getServiceCategoryId());
-
-        Booking booking = new Booking();
-        booking.setCustomer(customer);
-        booking.setServiceCategory(category);
-        booking.setServiceType(request.getServiceType());
-        booking.setIssueDescription(request.getIssueDescription());
-        booking.setPreferredDateTime(request.getPreferredDateTime());
-        booking.setPreferredEndDateTime(request.getPreferredEndDateTime());
-        booking.setServiceAddress(request.getServiceAddress());
-        booking.setLatitude(request.getLatitude());
-        booking.setLongitude(request.getLongitude());
-
-        Booking savedBooking = bookingService.createBooking(booking);
-
-        // Automatically find and assign an eligible engineer.
-        engineerAllocationService.allocateBooking(savedBooking.getId());
-
-        // Fetch the updated booking with its allocation status.
-        Booking updatedBooking = bookingService.findById(savedBooking.getId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Booking not found"));
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(mapToResponse(updatedBooking));
-    }
-
-    // Get all bookings belonging to the authenticated customer
-    @GetMapping("/my")
-    public ResponseEntity<List<BookingResponse>> getMyBookings(
-            Authentication authentication) {
-
-        User customer = getAuthenticatedCustomer(authentication);
-
-        List<BookingResponse> responses = bookingService
-                .getCustomerBookings(customer.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-
-        return ResponseEntity.ok(responses);
-    }
-
-    // Get a specific booking after checking ownership
-    @GetMapping("/{id}")
-    public ResponseEntity<BookingResponse> getBookingById(
-            @PathVariable Long id,
-            Authentication authentication) {
-
-        User customer = getAuthenticatedCustomer(authentication);
-
-        Booking booking = bookingService.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Booking not found"));
-
-        if (!booking.getCustomer().getId().equals(customer.getId())) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "You are not authorized to view this booking");
+                this.bookingService = bookingService;
+                this.userRepository = userRepository;
+                this.engineerAllocationService = engineerAllocationService;
         }
 
-        return ResponseEntity.ok(mapToResponse(booking));
-    }
+        // Create a booking for the authenticated customer
+        @PostMapping
+        public ResponseEntity<BookingResponse> createBooking(
+                        @Valid @RequestBody BookingRequest request,
+                        Authentication authentication) {
 
-    // Get the authenticated customer from the JWT identity
-    private User getAuthenticatedCustomer(Authentication authentication) {
+                User customer = getAuthenticatedCustomer(authentication);
 
-        if (authentication == null || !authentication.isAuthenticated()) {
-            throw new ResponseStatusException(
-                    HttpStatus.UNAUTHORIZED,
-                    "Authentication required");
+                ServiceCategory category = new ServiceCategory();
+                category.setId(request.getServiceCategoryId());
+
+                Booking booking = new Booking();
+                booking.setCustomer(customer);
+                booking.setServiceCategory(category);
+                booking.setServiceType(request.getServiceType());
+                booking.setIssueDescription(request.getIssueDescription());
+                booking.setPreferredDateTime(request.getPreferredDateTime());
+                booking.setPreferredEndDateTime(request.getPreferredEndDateTime());
+                booking.setServiceAddress(request.getServiceAddress());
+                booking.setLatitude(request.getLatitude());
+                booking.setLongitude(request.getLongitude());
+
+                Booking savedBooking = bookingService.createBooking(booking);
+
+                // Automatically find and assign an eligible engineer.
+                engineerAllocationService.allocateBooking(savedBooking.getId());
+
+                // Fetch the updated booking with its allocation status.
+                Booking updatedBooking = bookingService.findById(savedBooking.getId())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Booking not found"));
+
+                return ResponseEntity
+                                .status(HttpStatus.CREATED)
+                                .body(mapToResponse(updatedBooking));
         }
 
-        User customer = userRepository.findByEmail(authentication.getName())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "User account not found"));
+        // Get status history for a booking owned by the authenticated customer
+        @GetMapping("/{id}/history")
+        public ResponseEntity<List<BookingStatusHistoryResponse>> getBookingStatusHistory(
+                        @PathVariable Long id,
+                        Authentication authentication) {
 
-        if (customer.getRole() != Role.CUSTOMER) {
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Only customers can access these booking operations");
+                User customer = getAuthenticatedCustomer(authentication);
+
+                Booking booking = bookingService.findById(id)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Booking not found"));
+
+                if (!booking.getCustomer().getId().equals(customer.getId())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "You are not authorized to view this booking history");
+                }
+
+                List<BookingStatusHistoryResponse> history = bookingService.getBookingStatusHistory(id);
+
+                return ResponseEntity.ok(history);
         }
 
-        return customer;
-    }
+        // Get all bookings belonging to the authenticated customer
+        @GetMapping("/my")
+        public ResponseEntity<List<BookingResponse>> getMyBookings(
+                        Authentication authentication) {
 
-    // Convert Booking entity into BookingResponse DTO
-    private BookingResponse mapToResponse(Booking booking) {
+                User customer = getAuthenticatedCustomer(authentication);
 
-        String engineerName = null;
+                List<BookingResponse> responses = bookingService
+                                .getCustomerBookings(customer.getId())
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
 
-        if (booking.getAssignedEngineer() != null
-                && booking.getAssignedEngineer().getUser() != null) {
-            engineerName = booking.getAssignedEngineer()
-                    .getUser()
-                    .getFullName();
+                return ResponseEntity.ok(responses);
         }
 
-        return new BookingResponse(
-                booking.getId(),
-                booking.getServiceCategory().getName(),
-                booking.getServiceType(),
-                booking.getIssueDescription(),
-                booking.getPreferredDateTime(),
-                booking.getPreferredEndDateTime(),
-                booking.getServiceAddress(),
-                booking.getStatus(),
-                engineerName,
-                booking.getCreatedAt());
-    }
+        // Get a specific booking after checking ownership
+        @GetMapping("/{id}")
+        public ResponseEntity<BookingResponse> getBookingById(
+                        @PathVariable Long id,
+                        Authentication authentication) {
+
+                User customer = getAuthenticatedCustomer(authentication);
+
+                Booking booking = bookingService.findById(id)
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "Booking not found"));
+
+                if (!booking.getCustomer().getId().equals(customer.getId())) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "You are not authorized to view this booking");
+                }
+
+                return ResponseEntity.ok(mapToResponse(booking));
+        }
+
+        // Get the authenticated customer from the JWT identity
+        private User getAuthenticatedCustomer(Authentication authentication) {
+
+                if (authentication == null || !authentication.isAuthenticated()) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.UNAUTHORIZED,
+                                        "Authentication required");
+                }
+
+                User customer = userRepository.findByEmail(authentication.getName())
+                                .orElseThrow(() -> new ResponseStatusException(
+                                                HttpStatus.NOT_FOUND,
+                                                "User account not found"));
+
+                if (customer.getRole() != Role.CUSTOMER) {
+                        throw new ResponseStatusException(
+                                        HttpStatus.FORBIDDEN,
+                                        "Only customers can access these booking operations");
+                }
+
+                return customer;
+        }
+
+        // Convert Booking entity into BookingResponse DTO
+        private BookingResponse mapToResponse(Booking booking) {
+
+                String engineerName = null;
+
+                if (booking.getAssignedEngineer() != null
+                                && booking.getAssignedEngineer().getUser() != null) {
+                        engineerName = booking.getAssignedEngineer()
+                                        .getUser()
+                                        .getFullName();
+                }
+
+                return new BookingResponse(
+                                booking.getId(),
+                                booking.getServiceCategory().getName(),
+                                booking.getServiceType(),
+                                booking.getIssueDescription(),
+                                booking.getPreferredDateTime(),
+                                booking.getPreferredEndDateTime(),
+                                booking.getServiceAddress(),
+                                booking.getStatus(),
+                                engineerName,
+                                booking.getCreatedAt());
+        }
 }

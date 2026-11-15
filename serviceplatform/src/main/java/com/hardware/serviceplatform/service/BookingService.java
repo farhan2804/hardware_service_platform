@@ -11,7 +11,7 @@ import com.hardware.serviceplatform.repository.BookingRepository;
 import com.hardware.serviceplatform.repository.BookingStatusHistoryRepository;
 import com.hardware.serviceplatform.repository.ServiceCategoryRepository;
 import com.hardware.serviceplatform.repository.UserRepository;
-
+import com.hardware.serviceplatform.dto.response.BookingStatusHistoryResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +37,23 @@ public class BookingService {
                 this.userRepository = userRepository;
                 this.serviceCategoryRepository = serviceCategoryRepository;
                 this.statusHistoryRepository = statusHistoryRepository;
+        }
+
+        @Transactional(readOnly = true)
+        public List<BookingStatusHistoryResponse> getBookingStatusHistory(Long bookingId) {
+
+                return statusHistoryRepository
+                                .findByBookingIdOrderByChangedAtAsc(bookingId)
+                                .stream()
+                                .map(history -> new BookingStatusHistoryResponse(
+                                                history.getPreviousStatus(),
+                                                history.getNewStatus(),
+                                                history.getChangedBy() != null
+                                                                ? history.getChangedBy().getFullName()
+                                                                : null,
+                                                history.getNote(),
+                                                history.getChangedAt()))
+                                .toList();
         }
 
         @Transactional

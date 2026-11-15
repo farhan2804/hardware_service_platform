@@ -486,7 +486,22 @@
   background: #19bda7;
   cursor: pointer;
 }
+.booking-card {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
 
+.booking-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.booking-card:focus-visible {
+  outline: 2px solid #19d9bd;
+  outline-offset: 3px;
+}
 /* Responsive */
 
 @media (max-width: 900px) {
