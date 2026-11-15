@@ -5,10 +5,7 @@ import CustomerDashboard from "./pages/customer/CustomerDashboard";
 import BookingForm from "./pages/customer/BookingForm";
 import BookingDetails from "./pages/customer/BookingDetails";
 import EngineerDashboard from "./pages/engineer/EngineerDashboard";
-
-function AdminDashboard() {
-  return <h1>Admin Dashboard</h1>;
-}
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 function RegisterPlaceholder() {
   return <h1>Registration Page</h1>;
@@ -31,7 +28,6 @@ function App() {
 
       <Route path="/engineer/dashboard" element={<EngineerDashboard />} />
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
-
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
