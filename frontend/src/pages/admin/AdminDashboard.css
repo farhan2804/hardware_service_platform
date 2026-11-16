@@ -493,3 +493,129 @@
     font-size: 11px;
   }
 }
+/* Engineer Directory */
+
+.admin-engineers-section {
+  margin-top: 25px;
+}
+
+.admin-engineer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.admin-engineer-card {
+  padding: 20px;
+  border: 1px solid #e8edf2;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.admin-engineer-card-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.admin-engineer-card-header h3 {
+  margin: 0 0 5px;
+  color: #172333;
+  font-size: 16px;
+}
+
+.admin-availability {
+  padding: 6px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-availability.available {
+  background: #e5f7ee;
+  color: #16804c;
+}
+
+.admin-availability.unavailable {
+  background: #ffebeb;
+  color: #b33b3b;
+}
+
+.admin-engineer-details {
+  display: grid;
+  gap: 9px;
+  padding: 16px 0;
+}
+
+.admin-engineer-details p {
+  margin: 0;
+  color: #687688;
+  font-size: 12px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.admin-engineer-details strong {
+  color: #344256;
+}
+
+.admin-engineer-skills {
+  padding-top: 14px;
+  border-top: 1px solid #edf0f4;
+}
+
+.admin-engineer-skills > strong {
+  color: #344256;
+  font-size: 12px;
+}
+
+.admin-skill-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.admin-skill-tag {
+  padding: 6px 9px;
+  border-radius: 5px;
+  background: #e9f9f5;
+  color: #087e6b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.admin-engineer-workload {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-top: 16px;
+  padding: 13px;
+  border-radius: 7px;
+  background: #f8fafc;
+}
+
+.admin-engineer-workload span {
+  color: #687688;
+  font-size: 12px;
+}
+
+.admin-engineer-workload strong {
+  color: #172333;
+  font-size: 23px;
+}
+
+.admin-engineer-workload small {
+  color: #929dab;
+  font-size: 11px;
+}
+
+@media (max-width: 900px) {
+  .admin-engineer-grid {
+    grid-template-columns: 1fr;
+  }
+}

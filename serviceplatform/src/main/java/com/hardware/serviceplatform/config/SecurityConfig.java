@@ -32,27 +32,24 @@ public class SecurityConfig {
             throws Exception {
 
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
 
-            .csrf(csrf -> csrf.disable())
+                .csrf(csrf -> csrf.disable())
 
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/","/api/auth/**", "/api/test").permitAll()
-                .anyRequest().authenticated()
-            )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/", "/api/auth/**", "/api/test").permitAll()
+                        .anyRequest().authenticated())
 
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
+                .sessionManagement(session -> session
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
-            .formLogin(form -> form.disable())
+                .formLogin(form -> form.disable())
 
-            .httpBasic(basic -> basic.disable())
+                .httpBasic(basic -> basic.disable())
 
-            .addFilterBefore(
-                jwtAuthenticationFilter,
-                UsernamePasswordAuthenticationFilter.class
-            );
+                .addFilterBefore(
+                        jwtAuthenticationFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -63,21 +60,18 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(
-            List.of("http://localhost:5173")
-        );
+                List.of("http://localhost:5173",
+                        "https://hardwarerepairservice.netlify.app"));
 
         configuration.setAllowedMethods(
-            List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        );
+                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
         configuration.setAllowedHeaders(
-            List.of("Authorization", "Content-Type")
-        );
+                List.of("Authorization", "Content-Type"));
 
         configuration.setAllowCredentials(false);
 
-        UrlBasedCorsConfigurationSource source =
-            new UrlBasedCorsConfigurationSource();
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 
         source.registerCorsConfiguration("/**", configuration);
 

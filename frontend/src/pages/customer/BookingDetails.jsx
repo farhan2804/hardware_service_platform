@@ -16,6 +16,7 @@ function BookingDetails() {
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [quotationLoading, setQuotationLoading] = useState(true);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   const [error, setError] = useState("");
   const [historyError, setHistoryError] = useState("");
@@ -26,102 +27,222 @@ function BookingDetails() {
   const [paymentMethod, setPaymentMethod] = useState("UPI");
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
-
   const [processing, setProcessing] = useState(false);
 
+  const getErrorMessage = (err, fallback) => {
+    const data = err?.response?.data;
+
+    if (typeof data === "string" && data.trim()) {
+      return data;
+    }
+
+    return data?.message || data?.error || err?.message || fallback;
+  };
+
+  const getQuotationId = (value) => value?.quotationId ?? value?.id ?? null;
+
+  const isNotFoundError = (err) => {
+    const status = err?.response?.status;
+    const message = String(
+      err?.response?.data?.message || err?.response?.data?.error || "",
+    ).toLowerCase();
+
+    return status === 404 || message.includes("payment not found");
+  };
+
+  const loadPayment = async (quotationId) => {
+    if (!quotationId) {
+      setPayment(null);
+      return null;
+    }
+
+    try {
+      const response = await api.get(`/payments/quotations/${quotationId}`);
+
+      setPayment(response.data);
+      return response.data;
+    } catch (err) {
+      if (isNotFoundError(err)) {
+        setPayment(null);
+        return null;
+      }
+
+      throw err;
+    }
+  };
+
+  // Load booking, history, quotation and feedback.
   useEffect(() => {
-    const fetchBooking = async () => {
-      try {
-        const response = await api.get(`/bookings/${bookingId}`);
-        setBooking(response.data);
-      } catch (err) {
-        setError(
-          err.response?.data?.message || "Unable to load booking details.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
+    let isActive = true;
 
-    const fetchHistory = async () => {
-      try {
-        const response = await api.get(`/bookings/${bookingId}/history`);
-        setHistory(response.data);
-      } catch (err) {
-        setHistoryError(
-          err.response?.data?.message || "Unable to load booking history.",
-        );
-      } finally {
-        setHistoryLoading(false);
-      }
-    };
+    const loadBookingDetails = async () => {
+      setLoading(true);
+      setHistoryLoading(true);
+      setQuotationLoading(true);
 
-    const fetchQuotation = async () => {
+      setError("");
+      setHistoryError("");
+      setQuotationError("");
+      setActionError("");
+      setSuccessMessage("");
+
+      setBooking(null);
+      setHistory([]);
+      setQuotation(null);
+      setPayment(null);
+      setFeedback(null);
+
       try {
-        const response = await api.get(`/quotations/bookings/${bookingId}`);
-        setQuotation(response.data);
-      } catch (err) {
-        // A quotation may not have been created yet.
-        if (err.response?.status !== 404) {
-          setQuotationError(
-            err.response?.data?.message || "Unable to load quotation.",
+        const bookingResponse = await api.get(`/bookings/${bookingId}`);
+
+        if (!isActive) return;
+
+        setBooking(bookingResponse.data);
+
+        const [historyResult, quotationResult, feedbackResult] =
+          await Promise.allSettled([
+            api.get(`/bookings/${bookingId}/history`),
+            api.get(`/quotations/bookings/${bookingId}`),
+            api.get("/feedback/my"),
+          ]);
+
+        if (!isActive) return;
+
+        // Booking history.
+        if (historyResult.status === "fulfilled") {
+          setHistory(
+            Array.isArray(historyResult.value.data)
+              ? historyResult.value.data
+              : [],
+          );
+          setHistoryError("");
+        } else {
+          setHistoryError(
+            getErrorMessage(
+              historyResult.reason,
+              "Unable to load booking history.",
+            ),
           );
         }
-      } finally {
-        setQuotationLoading(false);
-      }
-    };
 
-    const fetchFeedback = async () => {
-      try {
-        const response = await api.get("/feedback/my");
-        const feedbackList = Array.isArray(response.data) ? response.data : [];
+        // Quotation.
+        if (quotationResult.status === "fulfilled") {
+          setQuotation(quotationResult.value.data);
+          setQuotationError("");
+        } else if (quotationResult.reason?.response?.status === 404) {
+          // No quotation exists yet. This is normal.
+          setQuotation(null);
+          setQuotationError("");
+        } else {
+          setQuotationError(
+            getErrorMessage(
+              quotationResult.reason,
+              "Unable to load quotation.",
+            ),
+          );
+        }
 
-        const existingFeedback = feedbackList.find(
-          (item) => Number(item.bookingId) === Number(bookingId),
-        );
+        // Existing customer feedback.
+        if (feedbackResult.status === "fulfilled") {
+          const feedbackList = Array.isArray(feedbackResult.value.data)
+            ? feedbackResult.value.data
+            : [];
 
-        if (existingFeedback) {
-          setFeedback(existingFeedback);
+          const existingFeedback = feedbackList.find(
+            (item) => Number(item.bookingId) === Number(bookingId),
+          );
+
+          setFeedback(existingFeedback || null);
+        } else {
+          console.error(
+            "Unable to load existing feedback:",
+            feedbackResult.reason,
+          );
         }
       } catch (err) {
-        console.error("Unable to check existing feedback:", err);
+        if (!isActive) return;
+
+        setError(getErrorMessage(err, "Unable to load booking details."));
+      } finally {
+        if (isActive) {
+          setLoading(false);
+          setHistoryLoading(false);
+          setQuotationLoading(false);
+        }
       }
     };
 
-    fetchBooking();
-    fetchHistory();
-    fetchQuotation();
-    fetchFeedback();
+    if (bookingId) {
+      loadBookingDetails();
+    } else {
+      setError("Invalid booking ID.");
+      setLoading(false);
+      setHistoryLoading(false);
+      setQuotationLoading(false);
+    }
+
+    return () => {
+      isActive = false;
+    };
   }, [bookingId]);
 
-  // Load payment details after a quotation has been approved.
+  // Fetch payment only when the quotation has been approved.
   useEffect(() => {
-    if (quotation?.status !== "APPROVED") return;
+    let isActive = true;
 
     const fetchPayment = async () => {
+      const quotationId = getQuotationId(quotation);
+
+      if (quotation?.status !== "APPROVED" || !quotationId) {
+        setPayment(null);
+        setPaymentLoading(false);
+        return;
+      }
+
+      setPaymentLoading(true);
+
       try {
-        const response = await api.get(
-          `/payments/quotations/${quotation.quotationId}`,
-        );
-        setPayment(response.data);
+        const response = await api.get(`/payments/quotations/${quotationId}`);
+
+        if (isActive) {
+          setPayment(response.data);
+          setActionError("");
+        }
       } catch (err) {
-        // No payment exists until the customer initiates one.
-        if (err.response?.status !== 404) {
+        if (!isActive) return;
+
+        if (isNotFoundError(err)) {
+          // Payment has not been initiated yet.
+          setPayment(null);
+        } else {
           setActionError(
-            err.response?.data?.message || "Unable to initiate payment.",
+            getErrorMessage(err, "Unable to load payment details."),
           );
+        }
+      } finally {
+        if (isActive) {
+          setPaymentLoading(false);
         }
       }
     };
 
     fetchPayment();
+
+    return () => {
+      isActive = false;
+    };
   }, [quotation]);
 
   const formatDate = (dateTime) => {
     if (!dateTime) return "Not available";
 
-    return new Date(dateTime).toLocaleDateString("en-IN", {
+    const date = new Date(dateTime);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not available";
+    }
+
+    return date.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -131,7 +252,13 @@ function BookingDetails() {
   const formatTime = (dateTime) => {
     if (!dateTime) return "Not available";
 
-    return new Date(dateTime).toLocaleTimeString("en-IN", {
+    const date = new Date(dateTime);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not available";
+    }
+
+    return date.toLocaleTimeString("en-IN", {
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -140,67 +267,102 @@ function BookingDetails() {
 
   const formatStatus = (status) => {
     if (!status) return "Unknown";
+
     return status.replaceAll("_", " ");
   };
 
-  const formatAmount = (amount) => {
-    return Number(amount || 0).toLocaleString("en-IN", {
+  const formatAmount = (amount) =>
+    Number(amount || 0).toLocaleString("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 2,
     });
-  };
 
+  // Customer approves or rejects the quotation.
   const handleQuotationResponse = async (status) => {
+    const quotationId = getQuotationId(quotation);
+
+    if (!quotationId || processing) return;
+
     setProcessing(true);
     setActionError("");
     setSuccessMessage("");
 
     try {
-      const response = await api.put(
-        `/quotations/${quotation.quotationId}/respond`,
-        { status },
-      );
+      const response = await api.put(`/quotations/${quotationId}/respond`, {
+        status,
+      });
 
       setQuotation(response.data);
+
       setSuccessMessage(
         status === "APPROVED"
           ? "Quotation approved successfully."
-          : "Quotation rejected.",
+          : "Quotation rejected successfully.",
       );
     } catch (err) {
       setActionError(
-        err.response?.data?.message || "Unable to update quotation.",
+        getErrorMessage(err, "Unable to update quotation. Please try again."),
       );
     } finally {
       setProcessing(false);
     }
   };
 
+  // Create a payment for an approved quotation.
   const handleCreatePayment = async () => {
+    const quotationId = getQuotationId(quotation);
+
+    if (!quotationId || processing) return;
+
     setProcessing(true);
     setActionError("");
     setSuccessMessage("");
 
     try {
-      const response = await api.post(
-        `/payments/quotations/${quotation.quotationId}`,
-        { paymentMethod },
-      );
+      const response = await api.post(`/payments/quotations/${quotationId}`, {
+        paymentMethod: paymentMethod,
+      });
 
       setPayment(response.data);
       setSuccessMessage("Payment initiated successfully.");
     } catch (err) {
-      setActionError(
-        err.response?.data?.message || "Unable to initiate payment.",
-      );
+      console.error("Payment initiation failed:", err);
+
+      /*
+       * If the payment was already created by a previous request,
+       * retrieve that existing payment instead of leaving the
+       * customer stuck on the Initiate Payment screen.
+       */
+      try {
+        const existingPayment = await loadPayment(quotationId);
+
+        if (existingPayment) {
+          setSuccessMessage("An existing payment record was found and loaded.");
+          setActionError("");
+        } else {
+          setActionError(
+            getErrorMessage(
+              err,
+              "Unable to initiate payment. Please try again.",
+            ),
+          );
+        }
+      } catch (fetchError) {
+        console.error("Unable to retrieve existing payment:", fetchError);
+
+        setActionError(
+          getErrorMessage(err, "Unable to initiate payment. Please try again."),
+        );
+      }
     } finally {
       setProcessing(false);
     }
   };
 
+  // Simulate successful payment.
   const handleSimulatePayment = async () => {
-    if (!payment?.paymentId) return;
+    if (!payment?.paymentId || processing) return;
 
     setProcessing(true);
     setActionError("");
@@ -209,22 +371,27 @@ function BookingDetails() {
     try {
       const response = await api.post(
         `/payments/${payment.paymentId}/simulate`,
-        { successful: true },
+        {
+          successful: true,
+        },
       );
 
       setPayment(response.data);
       setSuccessMessage("Payment completed successfully.");
     } catch (err) {
       setActionError(
-        err.response?.data?.message || "Unable to process simulated payment.",
+        getErrorMessage(err, "Unable to process simulated payment."),
       );
     } finally {
       setProcessing(false);
     }
   };
 
+  // Submit customer feedback after completion.
   const handleFeedbackSubmit = async (event) => {
     event.preventDefault();
+
+    if (processing) return;
 
     setProcessing(true);
     setActionError("");
@@ -237,11 +404,10 @@ function BookingDetails() {
       });
 
       setFeedback(response.data);
+
       setSuccessMessage("Thank you! Your feedback has been submitted.");
     } catch (err) {
-      setActionError(
-        err.response?.data?.message || "Unable to submit feedback.",
-      );
+      setActionError(getErrorMessage(err, "Unable to submit feedback."));
     } finally {
       setProcessing(false);
     }
@@ -255,6 +421,7 @@ function BookingDetails() {
     return (
       <div className="booking-details-message">
         <p>{error || "Booking not found."}</p>
+
         <button onClick={() => navigate("/customer/dashboard")}>
           Back to Dashboard
         </button>
@@ -278,11 +445,15 @@ function BookingDetails() {
       <section className="details-heading">
         <div>
           <p className="details-eyebrow">SERVICE BOOKING</p>
+
           <h1>{booking.serviceCategory}</h1>
+
           <p>Track your repair request and booking information.</p>
         </div>
 
-        <span className={`booking-status ${booking.status?.toLowerCase()}`}>
+        <span
+          className={`booking-status ${booking.status?.toLowerCase() || ""}`}
+        >
           {formatStatus(booking.status)}
         </span>
       </section>
@@ -349,6 +520,7 @@ function BookingDetails() {
           ) : (
             <div>
               <strong>Not assigned yet</strong>
+
               <p>
                 Your request is waiting for an eligible service engineer. Please
                 check again later.
@@ -377,6 +549,7 @@ function BookingDetails() {
                 >
                   <div className="timeline-indicator">
                     <span className="timeline-dot" />
+
                     {index !== history.length - 1 && (
                       <span className="timeline-line" />
                     )}
@@ -386,7 +559,8 @@ function BookingDetails() {
                     <strong>{formatStatus(item.newStatus)}</strong>
 
                     <span className="timeline-date">
-                      {formatDate(item.changedAt)} at{" "}
+                      {formatDate(item.changedAt)}
+                      {" at "}
                       {formatTime(item.changedAt)}
                     </span>
 
@@ -405,7 +579,7 @@ function BookingDetails() {
         </section>
       </div>
 
-      {/* QUOTATION SECTION */}
+      {/* QUOTATION */}
       <section className="details-card workflow-card">
         <h2>Service quotation</h2>
 
@@ -474,12 +648,14 @@ function BookingDetails() {
         )}
       </section>
 
-      {/* PAYMENT SECTION */}
+      {/* PAYMENT */}
       {quotation?.status === "APPROVED" && (
         <section className="details-card workflow-card">
           <h2>Payment</h2>
 
-          {!payment ? (
+          {paymentLoading ? (
+            <p className="history-message">Loading payment details...</p>
+          ) : !payment ? (
             <>
               <p>
                 Your quotation has been approved. Initiate payment to proceed.
@@ -546,12 +722,18 @@ function BookingDetails() {
                   Payment completed successfully.
                 </p>
               )}
+
+              {payment.status === "FAILED" && (
+                <p className="workflow-error">
+                  Payment failed. Please contact support.
+                </p>
+              )}
             </>
           )}
         </section>
       )}
 
-      {/* FEEDBACK SECTION */}
+      {/* FEEDBACK */}
       {booking.status === "COMPLETED" && (
         <section className="details-card workflow-card">
           <h2>Service feedback</h2>
