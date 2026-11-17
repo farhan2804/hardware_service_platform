@@ -120,8 +120,10 @@ function EngineerDashboard() {
       console.error("Failed to update booking status:", err);
 
       setActionError(
-        err.response?.data?.message ||
-          "Unable to update this job. Please try again.",
+        status === "WORK_IN_PROGRESS"
+          ? "You cannot start work until the customer approves the quotation."
+          : err.response?.data?.message ||
+              "Unable to update this job. Please try again.",
       );
     } finally {
       setProcessingJobId(null);
