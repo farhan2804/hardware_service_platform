@@ -6,7 +6,7 @@ import com.hardware.serviceplatform.entity.User;
 import com.hardware.serviceplatform.enums.PaymentStatus;
 import com.hardware.serviceplatform.service.PaymentService;
 import com.hardware.serviceplatform.service.UserService;
-
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -66,23 +66,19 @@ public class PaymentController {
     }
 
     // Customer views payment details for a quotation.
-    @GetMapping("/quotations/{quotationId}")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public PaymentResponse getPayment(
-            @PathVariable Long quotationId,
-            Authentication authentication) {
+@GetMapping("/quotations/{quotationId}")
+@PreAuthorize("hasRole('CUSTOMER')")
+public ResponseEntity<PaymentResponse> getPayment(
+        @PathVariable Long quotationId,
+        Authentication authentication) {
 
-        User customer = getAuthenticatedUser(authentication);
+    User customer = getAuthenticatedUser(authentication);
 
-        Payment payment = paymentService
-                .getPaymentByQuotationId(
-                        quotationId,
-                        customer.getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Payment not found"));
-
-        return mapResponse(payment);
-    }
+    return paymentService
+            .getPaymentByQuotationId(quotationId, customer.getId())
+            .map(payment -> ResponseEntity.ok(mapResponse(payment)))
+            .orElseGet(() -> ResponseEntity.notFound().build());
+}
 
     private User getAuthenticatedUser(Authentication authentication) {
         return userService.findByEmail(authentication.getName())
