@@ -128,12 +128,27 @@ function EngineerDashboard() {
     }
   };
 
-  const handleAcceptJob = (bookingId) => {
-    handleStatusUpdate(
-      bookingId,
-      "ACCEPTED",
-      `Booking #${bookingId} accepted successfully.`,
-    );
+  const handleAcceptJob = async (bookingId) => {
+    try {
+      setProcessingJobId(bookingId);
+      setActionError("");
+      setActionSuccess("");
+
+      await api.post(`/engineers/me/jobs/${bookingId}/accept`);
+
+      setActionSuccess(`Booking #${bookingId} accepted successfully.`);
+
+      await fetchJobs(true);
+    } catch (err) {
+      console.error("Failed to accept booking:", err);
+
+      setActionError(
+        err.response?.data?.message ||
+          "Unable to accept this job. Please try again.",
+      );
+    } finally {
+      setProcessingJobId(null);
+    }
   };
 
   const handleStartJourney = (bookingId) => {
